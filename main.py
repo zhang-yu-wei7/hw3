@@ -105,3 +105,42 @@ plt.tight_layout()
 plt.savefig('hour_distribution.png', dpi=150)
 print("\n--- 任务 2 (b) 完成 ---")
 print("已生成图表: hour_distribution.png")
+
+# ==================== 任务 3：站点客流统计 ====================
+
+# 1. 筛选上车数据
+# 注意：确保'刷卡类型'列是数值型，0代表上车
+up_boarding_data = df[df['刷卡类型'] == 0]
+
+# 2. 统计各站点上车人数
+# 使用 groupby 按'上车站点'分组，size() 统计每组数量，sort_values 降序排列，head(10) 取前10
+top_10_stops = up_boarding_data['上车站点'].value_counts().head(10)
+
+# 打印结果用于检查
+print("\n--- 任务 3(a) 结果 ---")
+print("客流量前 10 的站点：")
+print(top_10_stops)
+
+# 3. 绘制水平条形图
+plt.figure(figsize=(10, 6))
+
+# 使用 Matplotlib 绘制水平条形图
+# top_10_stops.values 是人数，top_10_stops.index 是站点名
+plt.barh(top_10_stops.index, top_10_stops.values, color='skyblue')
+
+# 4. 设置图表样式
+plt.xlabel('客流量 (人次)', fontsize=12)
+plt.ylabel('上车站点', fontsize=12)
+plt.title('客流量前 10 的上车站点统计', fontsize=14, fontweight='bold')
+
+# 5. 在条形图上添加数值标签（可选，但能让图表更专业）
+# 遍历数据，在条形末端写上具体数字
+for i, v in enumerate(top_10_stops.values):
+    plt.text(v + 50, i, str(v), color='black', va='center', fontsize=10)
+
+# 6. 优化布局并保存图片
+plt.tight_layout()
+plt.savefig('top_stops.png', dpi=150)
+print("\n--- 任务 3(b) 完成 ---")
+print("已生成图表: top_stops.png")
+
