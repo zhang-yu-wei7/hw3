@@ -144,3 +144,52 @@ plt.savefig('top_stops.png', dpi=150)
 print("\n--- 任务 3(b) 完成 ---")
 print("已生成图表: top_stops.png")
 
+# ==================== 任务 4：高峰小时系数 (PHF) 计算 ====================
+
+print("\n--- 任务 4：高峰小时系数计算 ---")
+
+# 确保交易时间是 datetime 类型
+df['交易时间'] = pd.to_datetime(df['交易时间'])
+
+# 1. 找出高峰小时 (Peak Hour)
+df['小时'] = df['交易时间'].dt.hour
+hourly_counts = df.groupby('小时').size()
+
+peak_hour = hourly_counts.idxmax()
+peak_hour_volume = hourly_counts.max()
+
+print(f"高峰小时为: {peak_hour}:00 - {peak_hour+1}:00, 刷卡量: {peak_hour_volume} 次")
+
+# 2. 筛选高峰小时内的数据
+mask = (df['交易时间'].dt.hour == peak_hour)
+df_peak = df[mask].copy()
+
+# 设置索引以便重采样
+df_peak.set_index('交易时间', inplace=True)
+
+# 3. 5分钟粒度统计 (修改了这里：用 '5min' 代替 '5T')
+counts_5min = df_peak.resample('5min').size()
+max_5min_volume = counts_5min.max()
+max_5min_start = counts_5min.idxmax().strftime('%H:%M')
+max_5min_end = (counts_5min.idxmax() + pd.Timedelta(minutes=5)).strftime('%H:%M')
+
+# 计算 PHF5
+phf5 = peak_hour_volume / (12 * max_5min_volume)
+
+# 4. 15分钟粒度统计 (修改了这里：用 '15min' 代替 '15T')
+counts_15min = df_peak.resample('15min').size()
+max_15min_volume = counts_15min.max()
+max_15min_start = counts_15min.idxmax().strftime('%H:%M')
+max_15min_end = (counts_15min.idxmax() + pd.Timedelta(minutes=15)).strftime('%H:%M')
+
+# 计算 PHF15
+phf15 = peak_hour_volume / (4 * max_15min_volume)
+
+# 5. 格式化输出
+print("-" * 30)
+print(f"高峰小时: {peak_hour}:00 ~ {peak_hour+1}:00, 刷卡量: {peak_hour_volume} 次")
+print(f"最大 5 分钟刷卡量 ({max_5min_start}~{max_5min_end}): {max_5min_volume} 次")
+print(f"PHF5 = {peak_hour_volume} / (12 × {max_5min_volume}) = {phf5:.4f}")
+print(f"最大 15 分钟刷卡量 ({max_15min_start}~{max_15min_end}): {max_15min_volume} 次")
+print(f"PHF15 = {peak_hour_volume} / (4 × {max_15min_volume}) = {phf15:.4f}")
+print("-" * 30)
