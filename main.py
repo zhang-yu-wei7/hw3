@@ -193,3 +193,59 @@ print(f"PHF5 = {peak_hour_volume} / (12 × {max_5min_volume}) = {phf5:.4f}")
 print(f"最大 15 分钟刷卡量 ({max_15min_start}~{max_15min_end}): {max_15min_volume} 次")
 print(f"PHF15 = {peak_hour_volume} / (4 × {max_15min_volume}) = {phf15:.4f}")
 print("-" * 30)
+
+# ==================== 任务 5：线路驾驶员信息批量导出 ====================
+
+import os  # 用于操作文件夹和文件路径
+
+print("\n--- 任务 5：线路驾驶员信息批量导出 ---")
+
+# 1. 筛选线路号在 1101 至 1120 之间的记录
+# 确保线路号是整数类型（防止它是字符串导致比较出错）
+df['线路号'] = df['线路号'].astype(int)
+
+# 筛选范围
+target_lines = range(1101, 1121)  # 1101 到 1120
+df_filtered = df[df['线路号'].isin(target_lines)].copy()
+
+print(f"共筛选出 {len(df_filtered)} 条属于 1101-1120 线路的记录。")
+
+# 2. 创建文件夹
+output_dir = "线路驾驶员信息"
+# exist_ok=True 表示如果文件夹已存在则不报错
+os.makedirs(output_dir, exist_ok=True)
+
+print(f"正在生成文件到文件夹: {output_dir} ...")
+
+# 3. 遍历每一条线路，生成对应的 txt 文件
+for line_id in target_lines:
+    # 筛选当前线路的数据
+    df_line = df_filtered[df_filtered['线路号'] == line_id]
+
+    # 提取 '车辆编号' 和 '驾驶员编号' 两列，并去重
+    # drop_duplicates() 会保留唯一的 (车辆, 驾驶员) 组合
+    df_pairs = df_line[['车辆编号', '驾驶员编号']].drop_duplicates()
+
+    # 如果该线路有数据才写入文件
+    if not df_pairs.empty:
+        # 构造文件路径，例如：线路驾驶员信息/1101.txt
+        file_path = os.path.join(output_dir, f"{line_id}.txt")
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            # 写入第一行表头（根据题目要求的格式）
+            f.write(f"线路号: {line_id} 车辆编号 驾驶员编号")
+
+            # 遍历每一行数据写入
+            # itertuples 比 iterrows 效率更高
+            for row in df_pairs.itertuples(index=False):
+                # row[0]是车辆编号, row[1]是驾驶员编号
+                # 写入格式：换行 + 车辆号 + 空格 + 驾驶员号
+                # 题目示例看起来像是有对齐，这里简单用空格分隔，或者用制表符 \t
+                f.write(f"\n{row[0]} {row[1]}")
+
+        # 4. 打印生成路径
+        print(f"已生成: {file_path}")
+    else:
+        print(f"警告: 线路 {line_id} 没有找到相关记录。")
+
+print("\n--- 任务 5 完成 ---")
